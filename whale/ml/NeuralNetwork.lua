@@ -2,84 +2,85 @@
 	YES! Finally, neural networks.
 ]]
 
+if WhaleEditor ~= nil then
+	print = WhaleEditor.logp
+end
+
+local FileReader = require 'whale.io.FileReader'
+require 'whale.Matrix'
+require 'whale.Vector'
+
+local table = table
+
 local class = require 'middleclass'
-
-
-require 'scimoon.Matrix'
-require 'scimoon.Vector'
 
 local NeuralNetwork = class [[NeuralNetwork]]
 
-local sigmoid = function (x)
-  return 1 / (1 + math.exp(-x))
-end
-
-
---[[
-	input, output and hidden layers needs to be set manually
-]]
-function NeuralNetwork:initialize()
-	self.input = {}
-	self.output = {}
-	self.layers = {}
-	self.thetas = {}
-end
-
--- forward propagation
-function NeuralNetwork:fpb()
-	local layers = self.layers
-	table.insert(layers, 1, self.input)
-	table.insert(layers, #layers+1, self.output)
-	
-	for i=2, #layers do
-		local layer1 = vcopy(layers[i-1])
-		local layer2 = layers[i]
-		local theta = thetas[i-1]
-
-		-- adding bias unit
-		table.insert(layer1, 1, 1)
-
-		assert(#theta == #layer2, "Error 1")
-		assert(#(theta[1]) == (#layer1), "Error 1")
-
-		local t = theta(i-1)
-		
-		local z = t*layer1
-		
-		layer2 = vmap(z, sigmoid)
+function sigmoid(x)
+	if type(x) == 'number' then
+		return 1 / (1 + math.exp(-x))
+	elseif x.type == 'matrix' then
+		return mmap(x, sigmoid)
+	elseif x.type == 'vector' then
+		return vmap(x, sigmoid)
+	else
+		assert(1==0, "Pass sigmoid a number, a matrix or a vector, not a "..type(x))
 	end
 end
 
-local s = NeuralNetwork:new()
+local gradientSigmoid = function(x)
+	return dot(sigmoid(x), (1-sigmoid(x)))
+end
 
-s.input = vector{0, 0}
-s.output = vector{0}
+local function log(x)
+	if type(x) == 'number' then
+		return math.log(x)
+	elseif x.type == "vector" then
+		return vmap(x, log)
+	end
+end
 
-s.theta= {
-	matrix{ 
-		{-30, 20, 20}, 
-		{10, -20, -20}},
-	matrix{
-		{-10, 20, 20}
-		}
-}
+--[[
+	Neural Network Class
 
-s:fpb()
+	input: matrix of mxn where m is number of elements in the dataset and n is the number of features.
+	nbLayers: number of hidden layers
+	nbUnits: number of Units per hidden layer
+	output: vector, output.
+]]
+function NeuralNetwork:initialize(nbHiddenLayers, nbHiddenUnits, nbFeatures, nbOutputUnits, lambda)
+	self.input = {}
+	self.output = {}
+	self.nbHiddenLayers = nbHiddenLayers
+	self.nbHiddenUnits = nbHiddenUnits
+	self.nbFeatures = nbFeatures
+	self.nbOutputUnits = nbOutputUnits
+	self.lambda = lambda or 0
+	self.layers = {}
+	self.nbLayers = 0
+	self.thetas = {}
+end
 
+--[[
+	starts neural network training
+--]]
+function NeuralNetwork:process(X, y)
+	self.nbLayers = self.nbHiddenLayers + 2
 
+	-- creating layers
+	table.insert(self.layers, vector({}, self.nbFeatures, 0))
 
+	for i = 1,self.nbHiddenLayers do
+		table.insert(self.layers, vector({}, self.nbHiddenUnits, 0))
+	end
 
+	table.insert(self.layers, vector({}, self.nbOutputUnits, 0))
 
+	-- creating thetas
+	for i=1,#self.layers-1 do
+		local theta = randomMatrix(#self.layers[i+1], #self.layers[i] + 1)
+	end
 
+end
 
-
-
-
-
-
-
-
-
-
-
-
+return NeuralNetwork

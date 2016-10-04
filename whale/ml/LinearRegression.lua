@@ -1,3 +1,6 @@
+require 'whale.Matrix'
+require 'whale.Vector'
+
 local LinearRegression = {}
 
 --[[ 
