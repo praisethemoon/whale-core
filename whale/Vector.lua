@@ -1,4 +1,10 @@
 -- vector utilities
+
+
+
+local table = table
+local string = string
+
 --[[
   Initizalizer, creates a vector
   
@@ -8,9 +14,6 @@
   
   returns a new vector
 ]]
-
-
-local Table = table
 
 function vector(vdata, size, value)
   local v = vdata or {}
@@ -64,11 +67,13 @@ function vector(vdata, size, value)
     return v
   end
   
+  meta.__type = "vector"
+  
   setmetatable(v, meta)
   
   if size ~= nil then
     for i=1,size do
-      Table.insert(v, val)
+      table.insert(v, val)
     end
   end
   
@@ -543,8 +548,26 @@ function vfilter(v, t)
 
 end
 
+--[[
+  Element wise multiplication
+  @param v vector
+  @param w vector
+  
+  return v .* w
+]]
 
-
+function ewmult(v, w)
+  assert(v.type == "vector")
+  assert(w.type == "vector")
+  assert(#v == #w, string.format("Element wise multiplication requires vector with similar sizes but got #v: %d, #w: %d sizes.", #v, #w))
+  
+  local z = vector{}
+  
+  for i=1,#v do
+    z[i] = v[i] * w[i]
+  end
+  
+end
 
 
 

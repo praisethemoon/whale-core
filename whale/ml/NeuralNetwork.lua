@@ -1,20 +1,14 @@
---[[
-	YES! Finally, neural networks.
-]]
 
-if WhaleEditor ~= nil then
-	print = WhaleEditor.logp
-end
+local class = require 'middleclass'
 
-local FileReader = require 'whale.io.FileReader'
+-- Creating class
+local NeuralNetwork = class [[NeuralNetwork]]
+
+
 require 'whale.Matrix'
 require 'whale.Vector'
 
 local table = table
-
-local class = require 'middleclass'
-
-local NeuralNetwork = class [[NeuralNetwork]]
 
 function sigmoid(x)
 	if type(x) == 'number' then
@@ -40,47 +34,74 @@ local function log(x)
 	end
 end
 
---[[
-	Neural Network Class
 
-	input: matrix of mxn where m is number of elements in the dataset and n is the number of features.
-	nbLayers: number of hidden layers
-	nbUnits: number of Units per hidden layer
-	output: vector, output.
+--[[
+    Creates an empty Neural Network 
+    @param layers: Array of integers, where first element is the size of the first layer, etc.
 ]]
-function NeuralNetwork:initialize(nbHiddenLayers, nbHiddenUnits, nbFeatures, nbOutputUnits, lambda)
-	self.input = {}
-	self.output = {}
-	self.nbHiddenLayers = nbHiddenLayers
-	self.nbHiddenUnits = nbHiddenUnits
-	self.nbFeatures = nbFeatures
-	self.nbOutputUnits = nbOutputUnits
-	self.lambda = lambda or 0
-	self.layers = {}
-	self.nbLayers = 0
-	self.thetas = {}
+function NeuralNetwork:initialize(layers)
+    self.layers = {}
+    self.theta = {}
+    
+    -- creating layers a(i, j)
+    for i, v in ipairs(layers) do
+        self.layers[i] = vector(nil, layers[i])
+		--[[
+		printVector(self.layers[i])
+		print("----------------") 
+		]]
+    end
+    
+    -- creating theta matricies
+    -- matrix theta should not be zero! rather, it should be close to zero
+    for i = 1, #self.layers - 1 do
+		-- not adding +1 because we assume bias unit is considered
+        self.theta[i] = randomMatrix(#self.layers[i+1], #self.layers[i] --[[ +1 ]])
+		--[[
+		printMatrix(self.theta[i])
+		print("----------------")
+		]]
+    end
+    
 end
 
 --[[
-	starts neural network training
---]]
-function NeuralNetwork:process(X, y)
-	self.nbLayers = self.nbHiddenLayers + 2
+    Trains for only one example where X is a vector.
+    @param x: feature vector
+    @param y: class
+]]
 
-	-- creating layers
-	table.insert(self.layers, vector({}, self.nbFeatures, 0))
-
-	for i = 1,self.nbHiddenLayers do
-		table.insert(self.layers, vector({}, self.nbHiddenUnits, 0))
-	end
-
-	table.insert(self.layers, vector({}, self.nbOutputUnits, 0))
-
-	-- creating thetas
-	for i=1,#self.layers-1 do
-		local theta = randomMatrix(#self.layers[i+1], #self.layers[i] + 1)
-	end
-
+function NeuralNetwork:trainSample(x, y)
+    --assert(type(X) == "vector")
+    assert(#self.layers[1] == #x)
+    self.layers[1] = x
+    
+    self:forwardPropagation()
+    self:backPropagation(y)
 end
 
-return NeuralNetwork
+function NeuralNetwork:forwardPropagation()
+    for i = 2, #self.layers do
+		print(i)
+        local zi = (self.theta[i-1]) * self.layers[i-1]
+        self.layers[i] = sigmoid(zi)
+    end
+end
+
+function NeuralNetwork:backPropagation(y)
+    local d = vector(nil, #self.layers, 0)
+    
+    d[#self.layers] = self.layers[#self.layers] - y
+    
+    for i = #self.layers-1, 2 do
+        d[i] = ewmult( mt(self.theta[i])*d[i+1], (self.layers[i] * (1-self.layers[i])))
+    end
+	
+	d[1] = 0
+	print(d[2])
+    
+end
+
+
+-- returning object
+return NeuralNetwork	

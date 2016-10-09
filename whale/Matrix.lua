@@ -56,6 +56,8 @@ function matrix(mdata, rows, cols, value)
     end
   end 
   
+  meta.__type = "matrix"
+  
   local m = mdata
   
   setmetatable(m, meta)
