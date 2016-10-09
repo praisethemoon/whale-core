@@ -556,7 +556,7 @@ end
   return v .* w
 ]]
 
-function ewmult(v, w)
+function vewmult(v, w)
   assert(v.type == "vector")
   assert(w.type == "vector")
   assert(#v == #w, string.format("Element wise multiplication requires vector with similar sizes but got #v: %d, #w: %d sizes.", #v, #w))
@@ -567,6 +567,7 @@ function ewmult(v, w)
     z[i] = v[i] * w[i]
   end
   
+  return z
 end
 
 

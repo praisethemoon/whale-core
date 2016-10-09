@@ -37,7 +37,7 @@ end
 
 --[[
     Creates an empty Neural Network 
-    @param layers: Array of integers, where first element is the size of the first layer, etc.
+    @param layers: Array of integers, where first element is the size of the first layer, etc. This does not include bias unit.
 ]]
 function NeuralNetwork:initialize(layers)
     self.layers = {}
@@ -55,9 +55,8 @@ function NeuralNetwork:initialize(layers)
     -- creating theta matricies
     -- matrix theta should not be zero! rather, it should be close to zero
     for i = 1, #self.layers - 1 do
-		-- not adding +1 because we assume bias unit is considered
-        self.theta[i] = randomMatrix(#self.layers[i+1], #self.layers[i] --[[ +1 ]])
-		--[[
+        self.theta[i] = randomMatrix(#self.layers[i+1], #self.layers[i] +1 )
+        --[[
 		printMatrix(self.theta[i])
 		print("----------------")
 		]]
@@ -74,34 +73,60 @@ end
 function NeuralNetwork:trainSample(x, y)
     --assert(type(X) == "vector")
     assert(#self.layers[1] == #x)
-    self.layers[1] = x
+    self.layers[1] = vcopy(x)
+    table.insert(self.layers[1], 1, 1)
+
     
-    self:forwardPropagation()
-    self:backPropagation(y)
+    local z = self:forwardPropagation()
+    local d = self:backPropagation(z, y)
 end
 
+--[[
+     Performs forward propagation algorithm.
+     returns z which is a table of all Z(i) where Z(i) = Theta(i-1)*a(i-1)
+]]
 function NeuralNetwork:forwardPropagation()
-    for i = 2, #self.layers do
-		print(i)
-        local zi = (self.theta[i-1]) * self.layers[i-1]
-        self.layers[i] = sigmoid(zi)
+    local z = {}
+
+    -- must not do this for h(x)
+    for i = 2, #self.layers-1 do
+		--print(i)
+        z[i] = ((self.theta[i-1])) * self.layers[i-1]
+        self.layers[i] = sigmoid(z[i])
+        -- adding bias unit
+        table.insert(self.layers[i], 1, 1)
     end
+
+    -- final layer
+    local i = #self.layers
+    z[i] = ((self.theta[i-1])) * self.layers[i-1]
+    self.layers[i] = sigmoid(z[i])
+
+    --printVector(self.layers[#self.layers])
+
+    return z
 end
 
-function NeuralNetwork:backPropagation(y)
-    local d = vector(nil, #self.layers, 0)
+--[[
+    Performs forward propagation.
+    @param z list Z(i) returned by forwardPropagation
+    @param y class result of the given training example for forwardPropagation
+    returns Delta(l)
+]]
+function NeuralNetwork:backPropagation(z, y)
+    local d = {}
     
     d[#self.layers] = self.layers[#self.layers] - y
     
-    for i = #self.layers-1, 2 do
-        d[i] = ewmult( mt(self.theta[i])*d[i+1], (self.layers[i] * (1-self.layers[i])))
+    for i = #self.layers-1, 2,-1 do
+        -- removing bias terms from theta
+        local theta = mcopy(self.theta[i])
+        getDelCol(theta, 1)
+        d[i] = vewmult( mT(theta)*d[i+1], vewmult(z[i], (1-z[i])))
     end
-	
-	d[1] = 0
-	print(d[2])
-    
+	    
+    return d
 end
-
 
 -- returning object
 return NeuralNetwork	
