@@ -78,7 +78,7 @@ function NeuralNetwork:trainSample(x, y)
 
     
     local z = self:forwardPropagation()
-    local d = self:backPropagation(z, y)
+    return self:backPropagation(z, y)
 end
 
 --[[
@@ -122,11 +122,34 @@ function NeuralNetwork:backPropagation(z, y)
         -- removing bias terms from theta
         local theta = mcopy(self.theta[i])
         getDelCol(theta, 1)
-        d[i] = vewmult( mT(theta)*d[i+1], vewmult(z[i], (1-z[i])))
+        d[i] = vewmult( mT(theta)*d[i+1], vewmult(z[i], (1-z[i])) )
     end
 	    
     return d
 end
 
+--[[
+    Computes Neural Network cost.
+    @param nn NeuralNetwork object
+    @param X design matrix
+    @param y vector of classes 
+    @param n number of classes
+]]
+function neuralNetworkCost(nn, X, y, n)
+    local D = vector({}, #self.layers, 0)
+    local m = #X
+    
+    for i = 1, m do
+        local _y = vector({}, n, 0)
+        _y[y[i]] = 1
+        local d = nn:trainSample(X[i], _y)
+
+        for l = 1, #nn.layers-1 do
+            D[l] = D[l] + d[l+1]*mT(nn.layers[l])
+        end
+    end
+
+end
+
 -- returning object
-return NeuralNetwork	
+return NeuralNetwork
