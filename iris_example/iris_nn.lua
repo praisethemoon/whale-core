@@ -28,9 +28,11 @@ table.remove(X, 1)
 local y = getDelCol(X, 5)
 y.type = "matrix"
 
--- append theta0
-local col = vector({},#X,1)
-addCol(X,1,col)
+--printMatrix(y)
 
-local nn = NeuralNetwork:new{3, 3, 3, 3}
-nn:trainSample(vector{0.5, 3, 0.2}, vector{1, 0, 0})
+-- append theta0
+--local col = vector({},#X,1)
+--addCol(X,1,col)
+
+local nn = NeuralNetwork:new{4, 4, 4, 3}
+NeuralNetwork.cost(nn, X, y)

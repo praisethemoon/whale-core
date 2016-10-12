@@ -561,5 +561,36 @@ function mmap(m1, f)
 	return m3
 end
 
+function matrixFromVect(v)
+  local m = matrix({}, #v, 1)
+  for i = 1, #v do
+    m[i][1] = v[i]
+  end
 
+  return m
+end
+
+--[[
+  Matix element wise multiplication by vector
+  @param m matrix
+  @param v vector
+  returns m .* v
+]]
+function mewmult(m, v)
+  assert(m.type == "matrix")
+  assert(v.type == "vector")
+  assert(#m[1] == #v)
+
+  local m2 = matrix{}
+  
+  for i=1,#m do
+    m2[i] = {}
+
+    for j = 1, #m[1] do
+      m2[i][j] = m[i][j] * v[j]
+    end
+  end
+  
+  return m2
+end
 

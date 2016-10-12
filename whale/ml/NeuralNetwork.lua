@@ -72,6 +72,8 @@ end
 
 function NeuralNetwork:trainSample(x, y)
     --assert(type(X) == "vector")
+    printVector(x)
+    printVector(self.layers[1])
     assert(#self.layers[1] == #x)
     self.layers[1] = vcopy(x)
     table.insert(self.layers[1], 1, 1)
@@ -120,32 +122,43 @@ function NeuralNetwork:backPropagation(z, y)
     
     for i = #self.layers-1, 2,-1 do
         -- removing bias terms from theta
-        local theta = mcopy(self.theta[i])
-        getDelCol(theta, 1)
-        d[i] = vewmult( mT(theta)*d[i+1], vewmult(z[i], (1-z[i])) )
+        --local theta = mcopy(self.theta[i])
+        print(i)
+        table.insert(z[i], 1, 1)
+        
+        local dtemp = d[i+1]
+        if dtemp.type == "vector" then
+            dtemp = mT(dtemp)
+        end
+
+        printMatrix(self.theta[i])
+        d[i] = mewmult( dtemp*self.theta[i], vewmult(z[i], (1-z[i])) )
     end
 	    
     return d
 end
 
 --[[
+    Static function 
     Computes Neural Network cost.
     @param nn NeuralNetwork object
     @param X design matrix
-    @param y vector of classes 
+    @param y vector of classes where y[i] is similar to {0, 0, 1, 0}
     @param n number of classes
 ]]
-function neuralNetworkCost(nn, X, y, n)
-    local D = vector({}, #self.layers, 0)
+function NeuralNetwork.cost(nn, X, y, n)
+    local D = vector({}, #nn.layers, 0)
     local m = #X
     
     for i = 1, m do
-        local _y = vector({}, n, 0)
-        _y[y[i]] = 1
-        local d = nn:trainSample(X[i], _y)
+        local d = nn:trainSample(X[i], y[i])
 
         for l = 1, #nn.layers-1 do
-            D[l] = D[l] + d[l+1]*mT(nn.layers[l])
+            print("d:")
+            printVector(d[l+1])
+            print("a:")
+            printVector(nn.layers[l])
+            D[l] = D[l] + mT(d[l+1])*(nn.layers[l])
         end
     end
 
